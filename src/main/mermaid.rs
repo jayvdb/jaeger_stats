@@ -83,7 +83,7 @@ fn main() {
             );
             write_diagram(&folder, &args.service_oper, mermaid);
         }
-        Err(err) => panic!("Reading '{}' failed with error: {err:?}", args.input),
+        Err(err) => panic!("Reading '{}' failed with error: {err:?}\nNOTE: Raw trace-json is not a valid input. You need data as returned by either 'trace_analysis' or 'stitch'.", args.input),
     }
 
     // PREVIOUS VERSION that only supported single format

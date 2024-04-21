@@ -2,6 +2,9 @@ use std::{collections::HashMap, error::Error, fs, io};
 
 use crate::{
     string_hash,
+    Metric,
+    MermaidScope,
+    mermaid,
     utils::{self, CsvFileBuffer},
     view_api::Version,
     ServiceOperString, StitchList,
@@ -201,7 +204,6 @@ impl Stitched {
             if CHECK_WRITTEN_FILE {
                 println!("the basic items are: {:?}", self.basic);
 
-                use crate::Metric;
                 println!(" And specificaly 'NumFixes': {:?}", self.basic.0.iter().find(|stitched_line| stitched_line.metric == Metric::NumFixes));
 
                 println!("\n\nFile written, now checking whether we can read it.");
@@ -462,6 +464,81 @@ impl Stitched {
         mem::take(&mut self.service_operation).into_iter().collect()
     }
 
+    /// get a mermaid diagram that depicts the this stitched dataset based on proc_oper and optionally a call-chain.
+    pub fn get_mermaid_diagram(
+        &self,
+        service_oper: &str,
+        call_chain_key: Option<&str>,
+        edge_value: Metric,
+        scope: MermaidScope,
+        compact: bool,
+    ) -> String {
+        // bundle all data that corresponds to the same Service (currently grouped by Service-operation)
+        let mut grouped_cc: HashMap<&str, Vec<&Vec<_>>> = HashMap::new();
+        self
+            .call_chain
+            .iter()
+            .for_each(|(service_oper, v)| {
+                let (service, oper_opt) = mermaid::split_service_operation(service_oper);
+                grouped_cc
+                    .entry(service)
+                    .and_modify(|values| values.push(&v))
+                    .or_insert([v].to_vec());
+            });
+
+
+        let trace_tree = grouped_cc
+            .into_iter()
+            .map(|(service, ccd_vv)| {
+                // TODO: it seems that we need an additional step to cummulate to Service (instead of Service_oper)
+                let trace_data = ccd_vv
+                    .into_iter()
+                    .flat_map(|ccd_v| {
+                        ccd_v
+                            .iter()
+                            .map(|ccd| {
+                                let count: u64 = ccd
+                                .data
+                                .0
+                                .first()
+                                .and_then(|data| data.data_avg)
+                                .unwrap()
+                                .round() as u64;
+                            let avg_duration_millis = ccd
+                                .data
+                                .0
+                                .iter()
+                                .find(|x| x.metric == Metric::AvgDurationMillis)
+                                .and_then(|data| data.data_avg)
+                                .expect("avg-duration missing");
+                            mermaid::TraceData::new(
+                                &ccd.full_key,
+                                ccd.rooted,
+                                ccd.is_leaf,
+                                count,
+                                //TODO: some more parameters need to be passed.
+                                None,
+                                avg_duration_millis,
+                                None,
+                                None,
+                                None,
+                                None,
+                            )    
+                        })
+                    })
+                    .collect();
+                (service.to_string(), trace_data)
+            })
+            .collect();
+        mermaid::TracePaths(trace_tree).get_diagram(
+            service_oper,
+            call_chain_key,
+            edge_value,
+            scope,
+            compact,
+        )
+    }
+    
     // /// Take the call_chain data out of the record and return as a hashmap
     // pub fn call_chain_as_hashmap(&mut self) -> HashMap<String, StitchedSet> {
     //     mem::take(&mut self.call_chain).into_iter().collect()

@@ -4,9 +4,12 @@ use super::{
     utils,
 };
 use crate::{
-    mermaid,
-    view_api::types::{ChartDataParameters, ProcessList, Selection, Table},
-    MermaidScope, Metric, TraceScope, ViewError, Viewer,
+    view_api::types::{ChartDataParameters, ProcessList, Selection, Table}, 
+    MermaidScope, 
+    Metric, 
+    TraceScope, 
+    ViewError, 
+    Viewer
 };
 use log::{error, info};
 use std::{path::Path, sync::Arc};
@@ -106,54 +109,9 @@ impl Viewer for StitchedDataSet {
         scope: MermaidScope,
         compact: bool,
     ) -> String {
-        let trace_tree = self
+        self
             .current
-            .call_chain
-            .iter()
-            .map(|(k, ccd)| {
-                /// TODO: it seems that we need an additional step to cummulate to Service (instead of Service_oper)
-                let trace_data = ccd
-                    .iter()
-                    .map(|ccd| {
-                        let count: u64 = ccd
-                            .data
-                            .0
-                            .first()
-                            .and_then(|data| data.data_avg)
-                            .unwrap()
-                            .round() as u64;
-                        let avg_duration_millis = ccd
-                            .data
-                            .0
-                            .iter()
-                            .find(|x| x.metric == Metric::AvgDurationMillis)
-                            .and_then(|data| data.data_avg)
-                            .expect("avg-duration missing");
-                        mermaid::TraceData::new(
-                            &ccd.full_key,
-                            ccd.rooted,
-                            ccd.is_leaf,
-                            count,
-                            //TODO: some more parameters need to be passed.
-                            None,
-                            avg_duration_millis,
-                            None,
-                            None,
-                            None,
-                            None,
-                        )
-                    })
-                    .collect();
-                (k.clone(), trace_data)
-            })
-            .collect();
-        mermaid::TracePaths(trace_tree).get_diagram(
-            service_oper,
-            call_chain_key,
-            edge_value,
-            scope,
-            compact,
-        )
+            .get_mermaid_diagram(service_oper, call_chain_key, edge_value, scope, compact)
     }
 
     fn get_call_chain_chart_data(

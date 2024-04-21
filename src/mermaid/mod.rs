@@ -8,3 +8,4 @@ mod tt_utils;
 
 pub use trace_data::TraceData;
 pub use trace_paths::TracePaths;
+pub use tt_utils::split_service_operation;
