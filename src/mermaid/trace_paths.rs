@@ -23,6 +23,8 @@ use std::collections::HashMap;
 pub struct TracePaths(pub HashMap<LeafService, Vec<TraceData>>);
 
 impl TracePaths {
+
+    /// build a trace-forrest of a series of TracePaths to easily see and analyze sthe common prefixes (overlap) between the different paths
     fn build_trace_forrest(&self, service_oper: &str) -> TraceForrest {
         let (service, oper_opt) = split_service_operation(service_oper);
         // find all paths that end in this 'service' and build a trace-tree out of it (filtered on the 'operation')
@@ -49,6 +51,7 @@ impl TracePaths {
                         .collect::<Vec<&str>>()
                         .join("\n")
                 );
+                println!("\nIMPORTANT NOTE: It seems that this structure contains service/Oper data instead of just Service. The service_oper = {service_oper} which might be in the list above.");
                 panic!("Failure to find the paths that terminate in service '{service}'.");
             }
         }

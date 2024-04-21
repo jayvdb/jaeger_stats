@@ -45,7 +45,7 @@ impl StitchedDataSet {
 impl Viewer for StitchedDataSet {
     fn from_file(file_name: &str) -> Result<Box<Self>, ViewError> {
         if Path::new(file_name).exists() {
-            info!("Trying to load the file {file_name}");
+            info!("Trying to load the file: '{file_name}'");
 
             match Stitched::from_file(file_name) {
                 Ok(data) => {
@@ -111,6 +111,7 @@ impl Viewer for StitchedDataSet {
             .call_chain
             .iter()
             .map(|(k, ccd)| {
+                /// TODO: it seems that we need an additional step to cummulate to Service (instead of Service_oper)
                 let trace_data = ccd
                     .iter()
                     .map(|ccd| {

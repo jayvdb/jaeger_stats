@@ -28,8 +28,8 @@ struct Args {
     #[arg(short, long, default_value_t = false)]
     trace_output: bool,
 
-    /// The output-extension determines the output-types are 'json' and 'bincode' (which is also used as the file-extension).
-    #[arg(short, long, default_value_t = String::from("json"))]
+    /// The output-extension determines the output-types are 'bson', 'json' and 'bincode' (which is also used as the file-extension).
+    #[arg(short, long, default_value_t = String::from("bson"))]
     output_ext: String,
 
     #[arg(short, long, default_value_t = String::from(EMPTY_ARG))]

@@ -19,7 +19,7 @@ use super::{
     stitched_set::StitchedSet,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{self};
+use serde_json;
 use std::{mem, path::Path};
 
 #[derive(Debug)]
@@ -138,20 +138,24 @@ impl Stitched {
 
         let stitched: Self = match ext.to_str().unwrap() {
             "json" => {
-                if let Ok(stitched) = serde_json::from_reader(reader) {
-                    stitched
-                } else {
-                    println!("WARN: Fallback to Legacy-format to load data!!");
-                    LegacyStitched::from_json(file_name)?
+                match serde_json::from_reader(reader) {
+                    Ok(stitched) => stitched,
+                    Err(err) => {
+                        println!("Failed to load stiched data with defaults reader, error: {err:?}\n");
+                        println!("WARN: Fallback to Legacy-format to load data!!");
+                        LegacyStitched::from_json(file_name)?
+                    }
                 }
             }
             "bincode" => {
-                if let Ok(stitched) = bincode::deserialize_from(reader) {
-                    stitched
-                } else {
-                    println!("WARN: Fallback to Legacy-format to load data!!");
-                    let sl = LegacyStitched::from_bincode(file_name)?;
-                    sl.try_into()?
+                match bincode::deserialize_from(reader) {
+                    Ok(stitched) => stitched,
+                    Err(err) => {
+                        println!("Original reader failed with error: {err:?}\n");
+                        println!("WARN: Fallback to Legacy-format to load data!!");
+                        let sl = LegacyStitched::from_bincode(file_name)?;
+                        sl.try_into()?
+                    }
                 }
             }
             ext => panic!(
@@ -164,29 +168,50 @@ impl Stitched {
 
     /// write the 'stitched' dataset to json
     pub fn to_json(&self, file_name: &str) {
+
+        const  CHECK_WRITTEN_FILE: bool = false;
+
         let path_str = Path::new(file_name);
-        let f = fs::File::create(path_str).expect("Failed to open file");
-        let writer = io::BufWriter::new(f);
-        // on a large dataset to_write pretty takes 15.5 seconds while to_write takes 12 sec (so 30% extra for pretty printing to make it human readible)
 
         let Some(ext) = path_str.extension() else {
             panic!("Failed to find extension of '{}'", path_str.display());
         };
 
-        match ext.to_str().unwrap() {
-            "json" => match serde_json::to_writer_pretty(writer, self) {
-                Ok(()) => (),
-                Err(err) => panic!("failed to Serialize '{file_name}' to JSON!! {err:?}"),
-            },
-            "bincode" => match bincode::serialize_into(writer, self) {
-                Ok(()) => (),
-                Err(err) => panic!("failed to Serialize '{file_name}' to BINCODE!! {err:?}"),
-            },
-            ext => panic!(
-                "Unknown extension '{ext}'of inputfile {}",
-                path_str.display()
-            ),
-        };
+        // write the file in the desired format based on the extension
+        {
+            let f = fs::File::create(path_str).expect("Failed to open file");
+            let writer = io::BufWriter::new(f);
+
+            match ext.to_str().unwrap() {
+                // on a large dataset to_write pretty takes 15.5 seconds while to_write takes 12 sec (so 30% extra for pretty printing to make it human readible)
+                "json" => match serde_json::to_writer_pretty(writer, self) {
+                    Ok(()) => (),
+                    Err(err) => panic!("failed to Serialize '{file_name}' to JSON!! {err:?}"),
+                },
+                "bincode" => match bincode::serialize_into(writer, self) {
+                    Ok(()) => (),
+                    Err(err) => panic!("failed to Serialize '{file_name}' to BINCODE!! {err:?}"),
+                },
+                ext => panic!(
+                    "Unknown extension '{ext}'of outputfile {}",
+                    path_str.display()
+                ),
+            };
+
+            if CHECK_WRITTEN_FILE {
+                println!("the basic items are: {:?}", self.basic);
+
+                use crate::Metric;
+                println!(" And specificaly 'NumFixes': {:?}", self.basic.0.iter().find(|stitched_line| stitched_line.metric == Metric::NumFixes));
+
+                println!("\n\nFile written, now checking whether we can read it.");
+                match Self::from_file(file_name) {
+                    Ok(_) => println!("Check succeeded: Read '{}'", file_name),
+                    Err(err) => println!("Failed to read file: '{file_name}'. Error: {err:?}")
+                }
+            }
+
+        }
     }
 
     /// Generate a header for a summary line showing as all metrics over a single statistic.

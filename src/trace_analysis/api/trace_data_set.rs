@@ -84,7 +84,10 @@ impl Viewer for TraceDataSet {
             .0
             .stats
             .iter()
-            .map(|(service_oper, oper_stats)| {
+            // TODO: Next line should be Service instead of Service_oper as the operations is an array of operations, so each operation is split out.
+            //   this is consistent with how the data is used in TraceData.build_trace_forrest()
+            //   rename 'service_oper' to 'service'
+            .map(|(service, oper_stats)| {
                 let trace_data = oper_stats
                     .call_chain
                     .0
@@ -114,7 +117,7 @@ impl Viewer for TraceDataSet {
                         )
                     })
                     .collect();
-                (service_oper.clone(), trace_data)
+                (service.clone(), trace_data)
             })
             .collect();
 

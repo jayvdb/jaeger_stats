@@ -114,6 +114,7 @@ impl StatsRecJson {
         let ext = ext.to_str().unwrap();
 
         let sj = match ext {
+            "bson" => bson::from_reader(reader)?,
             "json" => serde_json::from_reader(reader)?,
             "bincode" => bincode::deserialize_from(reader)?,
             ext => panic!(

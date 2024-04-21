@@ -6,18 +6,28 @@ use std::path::Path;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    // List of files to be stitched
+    /// List of files to be stitched
     #[arg(short, long, default_value_t = String::from("input.stitch"))]
     stitch_list: String,
 
-    #[arg(short, long, default_value_t = String::from("stitched.csv"))]
+    /// The base of the outputfile
+    #[arg(short, long, default_value_t = String::from("stitched"))]
     output: String,
+
+    /// The extension of the outputfile, which can be either 'json' or 'bincode' (bincode is faster, but not guaranteed to be backward portable across rust-versions)
+    #[arg(short, long, default_value_t = String::from("json"))]
+    ext: String,
+
+    /// generate a csv-output (based on the base as set by the argument output).
+    #[arg(short, long, default_value_t = false)]
+    csv_output: bool,
+
+    /// Handle input-files that use ',' as floating point separator
+    #[arg(long, default_value_t = true)]
+    comma_float: bool,
 
     #[arg(short, long, default_value_t = String::from("anomalies.csv"))]
     anomalies: String,
-
-    #[arg(short, long, default_value_t = true)]
-    comma_float: bool,
 
     #[arg(short, long, default_value_t = 0)]
     drop_count: usize,
@@ -63,8 +73,19 @@ fn main() {
     let stitched = Stitched::build(stitch_list, &stitch_pars);
 
     let path = Path::new(&args.output);
-    stitched.write_csv(path);
-    stitched.to_json("stitched.bincode");
+
+    if args.csv_output {
+        let path = path.with_extension("csv");
+        println!("Writing output in CSV-format to: {}", path.display());
+        stitched.write_csv(&path);
+
+    }
+
+    {
+        let path = path.with_extension(args.ext);
+        println!("Writing output in machine-readable format to: {}", path.display());
+        stitched.to_json(&path.into_os_string().into_string().unwrap());    
+    }
 
     println!("Stitched output written to: '{}'", path.display());
 

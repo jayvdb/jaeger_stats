@@ -20,13 +20,22 @@ impl ExponentialRegression {
         let orig_len = orig_data.len();
         match LinearRegression::new_from_dataset(&data, orig_len) {
             Some(lr) => {
+                let a = lr.y_intercept.exp();
                 let b = lr.slope.exp();
-                Some(Self {
-                    a: lr.y_intercept.exp(),
-                    b,
-                    avg_growth_per_period: b - 1.0,
-                    R_squared: lr.R_squared,
-                })
+                if a.is_nan() || b.is_nan() {
+                    // println!("Observed NaN when building exponential model for y_intercept={} and slope={}", lr.y_intercept, lr.slope);
+                    // println!("orig data = {:?}", orig_data);
+                    // println!("log_data = {:?}", data);
+                    // println!("Return None for exponential model");
+                    None
+                } else {
+                    Some(Self {
+                        a,
+                        b,
+                        avg_growth_per_period: b - 1.0,
+                        R_squared: lr.R_squared,
+                    })    
+                }
             }
             None => None,
         }

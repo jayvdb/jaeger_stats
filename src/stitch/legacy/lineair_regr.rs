@@ -13,7 +13,7 @@ pub struct LegacyLinearRegression {
     pub avg_growth_per_period: Option<f64>,
 }
 
-/// Implement Into directly as we do not want or need/accept the Operation from Stitched to LegacyStitched.
+/// Implement Into directly as we do not want or need/accept the Operation from Stitched to LegacyStitched, thus From-trait is not needed.
 impl TryInto<LinearRegression> for LegacyLinearRegression {
     type Error = &'static str;
 
