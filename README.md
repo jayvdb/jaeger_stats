@@ -202,3 +202,8 @@ cargo install --release trace_analysis
 On linux this will deploy a release version of 'trace_analysis' in the folder '$HOME/.cargo/bin/' which is assumed to be included in your path. 
 
 
+
+## License
+This project is primarily distributed under the terms of both the [MIT license](LICENSE-MIT) and the [Apache License (Version 2.0)](LICENSE-APACHE), same as the Rust language.
+
+
