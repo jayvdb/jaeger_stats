@@ -90,7 +90,15 @@ impl Span {
     /// two attributes are extracted as these are used frequently, the others are stored in a hashmap
     fn add_tags(&mut self, tags: &JaegerTags) {
         tags.iter().for_each(|tag| match &tag.key[..] {
-            "http.status_code" => self.http_status_code = Some(tag.get_i16()),
+            "http.status_code" => match tag.type_id.as_str() {
+                "int64" => self.http_status_code = Some(tag.get_i16()),
+                "string" => {
+                    let string_code = tag.get_string();
+                    let code = string_code.parse::<i16>().unwrap();
+                    self.http_status_code = Some(code)
+                }
+                _ => todo!("Tag type not supported"),
+            },
             "span.kind" => self.span_kind = Some(tag.get_string()),
             key => _ = self.attributes.insert(key.to_owned(), tag.get_as_string()),
         });
