@@ -1,13 +1,10 @@
 use std::{collections::HashMap, error::Error, fs, io};
 
 use crate::{
-    string_hash,
-    Metric,
-    MermaidScope,
-    mermaid,
+    mermaid, string_hash,
     utils::{self, CsvFileBuffer},
     view_api::Version,
-    ServiceOperString, StitchList,
+    MermaidScope, Metric, ServiceOperString, StitchList,
 };
 
 use super::{
@@ -140,27 +137,23 @@ impl Stitched {
         };
 
         let stitched: Self = match ext.to_str().unwrap() {
-            "json" => {
-                match serde_json::from_reader(reader) {
-                    Ok(stitched) => stitched,
-                    Err(err) => {
-                        println!("Failed to load stiched data with defaults reader, error: {err:?}\n");
-                        println!("WARN: Fallback to Legacy-format to load data!!");
-                        LegacyStitched::from_json(file_name)?
-                    }
+            "json" => match serde_json::from_reader(reader) {
+                Ok(stitched) => stitched,
+                Err(err) => {
+                    println!("Failed to load stiched data with defaults reader, error: {err:?}\n");
+                    println!("WARN: Fallback to Legacy-format to load data!!");
+                    LegacyStitched::from_json(file_name)?
                 }
-            }
-            "bincode" => {
-                match bincode::deserialize_from(reader) {
-                    Ok(stitched) => stitched,
-                    Err(err) => {
-                        println!("Original reader failed with error: {err:?}\n");
-                        println!("WARN: Fallback to Legacy-format to load data!!");
-                        let sl = LegacyStitched::from_bincode(file_name)?;
-                        sl.try_into()?
-                    }
+            },
+            "bincode" => match bincode::deserialize_from(reader) {
+                Ok(stitched) => stitched,
+                Err(err) => {
+                    println!("Original reader failed with error: {err:?}\n");
+                    println!("WARN: Fallback to Legacy-format to load data!!");
+                    let sl = LegacyStitched::from_bincode(file_name)?;
+                    sl.try_into()?
                 }
-            }
+            },
             ext => panic!(
                 "Unknown extension '{ext}'of inputfile {}",
                 path_str.display()
@@ -171,8 +164,7 @@ impl Stitched {
 
     /// write the 'stitched' dataset to json
     pub fn to_json(&self, file_name: &str) {
-
-        const  CHECK_WRITTEN_FILE: bool = false;
+        const CHECK_WRITTEN_FILE: bool = false;
 
         let path_str = Path::new(file_name);
 
@@ -204,15 +196,20 @@ impl Stitched {
             if CHECK_WRITTEN_FILE {
                 println!("the basic items are: {:?}", self.basic);
 
-                println!(" And specificaly 'NumFixes': {:?}", self.basic.0.iter().find(|stitched_line| stitched_line.metric == Metric::NumFixes));
+                println!(
+                    " And specificaly 'NumFixes': {:?}",
+                    self.basic
+                        .0
+                        .iter()
+                        .find(|stitched_line| stitched_line.metric == Metric::NumFixes)
+                );
 
                 println!("\n\nFile written, now checking whether we can read it.");
                 match Self::from_file(file_name) {
                     Ok(_) => println!("Check succeeded: Read '{}'", file_name),
-                    Err(err) => println!("Failed to read file: '{file_name}'. Error: {err:?}")
+                    Err(err) => println!("Failed to read file: '{file_name}'. Error: {err:?}"),
                 }
             }
-
         }
     }
 
@@ -475,17 +472,13 @@ impl Stitched {
     ) -> String {
         // bundle all data that corresponds to the same Service (currently grouped by Service-operation)
         let mut grouped_cc: HashMap<&str, Vec<&Vec<_>>> = HashMap::new();
-        self
-            .call_chain
-            .iter()
-            .for_each(|(service_oper, v)| {
-                let (service, oper_opt) = mermaid::split_service_operation(service_oper);
-                grouped_cc
-                    .entry(service)
-                    .and_modify(|values| values.push(&v))
-                    .or_insert([v].to_vec());
-            });
-
+        self.call_chain.iter().for_each(|(service_oper, v)| {
+            let (service, oper_opt) = mermaid::split_service_operation(service_oper);
+            grouped_cc
+                .entry(service)
+                .and_modify(|values| values.push(&v))
+                .or_insert([v].to_vec());
+        });
 
         let trace_tree = grouped_cc
             .into_iter()
@@ -494,10 +487,8 @@ impl Stitched {
                 let trace_data = ccd_vv
                     .into_iter()
                     .flat_map(|ccd_v| {
-                        ccd_v
-                            .iter()
-                            .map(|ccd| {
-                                let count: u64 = ccd
+                        ccd_v.iter().map(|ccd| {
+                            let count: u64 = ccd
                                 .data
                                 .0
                                 .first()
@@ -523,7 +514,7 @@ impl Stitched {
                                 None,
                                 None,
                                 None,
-                            )    
+                            )
                         })
                     })
                     .collect();
@@ -538,7 +529,7 @@ impl Stitched {
             compact,
         )
     }
-    
+
     // /// Take the call_chain data out of the record and return as a hashmap
     // pub fn call_chain_as_hashmap(&mut self) -> HashMap<String, StitchedSet> {
     //     mem::take(&mut self.call_chain).into_iter().collect()

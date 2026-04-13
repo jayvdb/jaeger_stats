@@ -4,12 +4,8 @@ use super::{
     utils,
 };
 use crate::{
-    view_api::types::{ChartDataParameters, ProcessList, Selection, Table}, 
-    MermaidScope, 
-    Metric, 
-    TraceScope, 
-    ViewError, 
-    Viewer
+    view_api::types::{ChartDataParameters, ProcessList, Selection, Table},
+    MermaidScope, Metric, TraceScope, ViewError, Viewer,
 };
 use log::{error, info};
 use std::{path::Path, sync::Arc};
@@ -109,8 +105,7 @@ impl Viewer for StitchedDataSet {
         scope: MermaidScope,
         compact: bool,
     ) -> String {
-        self
-            .current
+        self.current
             .get_mermaid_diagram(service_oper, call_chain_key, edge_value, scope, compact)
     }
 

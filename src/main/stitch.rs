@@ -78,13 +78,15 @@ fn main() {
         let path = path.with_extension("csv");
         println!("Writing output in CSV-format to: {}", path.display());
         stitched.write_csv(&path);
-
     }
 
     {
         let path = path.with_extension(args.ext);
-        println!("Writing output in machine-readable format to: {}", path.display());
-        stitched.to_json(&path.into_os_string().into_string().unwrap());    
+        println!(
+            "Writing output in machine-readable format to: {}",
+            path.display()
+        );
+        stitched.to_json(&path.into_os_string().into_string().unwrap());
     }
 
     println!("Stitched output written to: '{}'", path.display());

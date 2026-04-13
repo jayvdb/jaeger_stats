@@ -34,7 +34,7 @@ impl ExponentialRegression {
                         b,
                         avg_growth_per_period: b - 1.0,
                         R_squared: lr.R_squared,
-                    })    
+                    })
                 }
             }
             None => None,

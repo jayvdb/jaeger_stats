@@ -23,7 +23,6 @@ use std::collections::HashMap;
 pub struct TracePaths(pub HashMap<LeafService, Vec<TraceData>>);
 
 impl TracePaths {
-
     /// build a trace-forrest of a series of TracePaths to easily see and analyze sthe common prefixes (overlap) between the different paths
     fn build_trace_forrest(&self, service_oper: &str) -> TraceForrest {
         let (service, oper_opt) = split_service_operation(service_oper);

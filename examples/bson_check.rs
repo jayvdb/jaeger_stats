@@ -1,7 +1,7 @@
-use bson::{SerializerOptions, Document};
-use serde::{Serialize, Deserialize};
+use bson::{Document, SerializerOptions};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Bison {
     name: String,
     age: u16,
@@ -9,15 +9,14 @@ struct Bison {
     phone: u16,
 }
 
-
 pub fn check_bson() {
     let i = 5;
     let bison = Bison {
-            name: format!("Name {}", i),
-            age: i as u16,
-            place: format!("Place {}", i),
-            phone: i as u16,
-        };
+        name: format!("Name {}", i),
+        age: i as u16,
+        place: format!("Place {}", i),
+        phone: i as u16,
+    };
 
     let options = SerializerOptions::builder().human_readable(false).build();
     let bson = bson::to_bson_with_options(&bison, options).unwrap();
@@ -26,14 +25,13 @@ pub fn check_bson() {
     // let mut doc = Document::new();
     // doc.insert("array".to_string(), bson);
 
-//    let mut buf = Vec::new();
-//    bson.to_writer(&mut buf).unwrap();
+    // let mut buf = Vec::new();
+    // bson.to_writer(&mut buf).unwrap();
     match bson::to_vec(&bison) {
-        Ok(buf) =>  std::fs::write("data.bson", buf).expect("Failed to create file"),
-        Err(err) => panic!("Failed to serialized bison.\n\tError: {err:?}")
+        Ok(buf) => std::fs::write("data.bson", buf).expect("Failed to create file"),
+        Err(err) => panic!("Failed to serialized bison.\n\tError: {err:?}"),
     }
 }
-
 
 pub fn check_bson_vec() {
     let mut bisons: Vec<Bison> = Vec::with_capacity(1000);
@@ -59,7 +57,6 @@ pub fn check_bson_vec() {
     std::fs::write("data.bson", buf).expect("Failed to create file");
 }
 
-
-pub fn main () {
+pub fn main() {
     check_bson();
 }
